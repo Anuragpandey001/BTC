@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitcoin Real-Time Dashboard</title>
+    <link rel="icon" href="data:,">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@300;400;500&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
+    <style>
+        :root {
+            --btc: #f7931a;
+            --btc-glow: rgba(247, 147, 26, 0.4);
+            --btc-dim: rgba(247, 147, 26, 0.12);
+            --up: #00e5a0;
+            --up-dim: rgba(0, 229, 160, 0.12);
+            --down: #ff4d6d;
+            --down-dim: rgba(255, 77, 109, 0.12);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            min-height: 100vh;
+            transition: background 0.4s, color 0.4s;
+        }
+
+        /* ── DARK THEME (default) ── */
+        body.dark {
+            --bg: #080b14;
+            --bg2: #0d1220;
+            --bg3: #111827;
+            --card: rgba(13, 18, 32, 0.85);
+            --border: rgba(255, 255, 255, 0.06);
+            --text: #e8eaf0;
+            --muted: rgba(232, 234, 240, 0.45);
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        /* ── LIGHT THEME ── */
+        body.light {
+            --bg: #f0f2f8;
+            --bg2: #ffffff;
+            --bg3: #eaecf5;
+            --card: rgba(255, 255, 255, 0.9);
+            --border: rgba(0, 0, 0, 0.08);
+            --text: #0d1220;
+            --muted: rgba(13, 18, 32, 0.45);
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        /* ── Noise overlay ── */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.6;
+        }
+
+        /* ── Accent glow blobs ── */
+        .blob {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(120px);
+            pointer-events: none;
+            z-index: 0;
+            transition: opacity 0.4s;
+        }
+
+        .blob-1 {
+            width: 600px;
+            height: 600px;
+            top: -200px;
+            right: -100px;
+            background: var(--btc-glow);
+            opacity: 0.15;
+        }
+
+        .blob-2 {
+            width: 400px;
+            height: 400px;
+            bottom: 0;
+            left: -150px;
+            background: rgba(99, 102, 241, 0.3);
+            opacity: 0.1;
+        }
+
+        body.light .blob-1 {
+            opacity: 0.08;
+        }
+
+        body.light .blob-2 {
+            opacity: 0.06;
+        }
+
+        .container {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 28px 32px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── HEADER ── */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 36px;
+            padding: 18px 28px;
+            border-radius: 18px;
+            border: 1px solid var(--border);
+            background: var(--card);
+            backdrop-filter: blur(20px);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .btc-badge {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #f7931a 0%, #ffb347 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            font-weight: 900;
+            color: white;
+            box-shadow: 0 0 28px var(--btc-glow), 0 4px 16px rgba(247, 147, 26, 0.3);
+            position: relative;
+            animation: badgePulse 3s ease-in-out infinite;
+        }
+
+        @keyframes badgePulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 28px var(--btc-glow), 0 4px 16px rgba(247, 147, 26, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 0 48px var(--btc-glow), 0 4px 24px rgba(247, 147, 26, 0.5);
+            }
+        }
+
+        h1 {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 1.35em;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        h1 span {
+            color: var(--btc);
+        }
+
+        .header-sub {
+            font-size: 0.68em;
+            color: var(--muted);
+            font-weight: 400;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            margin-top: 2px;
+            font-family: 'DM Mono', monospace;
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 13px;
+            border-radius: 30px;
+            font-size: 0.7em;
+            font-weight: 500;
+            border: 1px solid var(--border);
+            background: var(--bg3);
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            font-family: 'DM Mono', monospace;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-dot.connected {
+            background: var(--up);
+            box-shadow: 0 0 8px var(--up);
+            animation: statusPulse 2s infinite;
+        }
+
+        .status-dot.disconnected {
+            background: var(--down);
+        }
+
+        @keyframes statusPulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.6;
+                transform: scale(0.85);
+            }
+        }
+
+        .theme-toggle {
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            padding: 9px 18px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.78em;
+            font-weight: 600;
+            color: var(--text);
+            transition: all 0.25s;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            letter-spacing: 0.03em;
+        }
+
+        .theme-toggle:hover {
+            background: var(--btc);
+            border-color: var(--btc);
+            color: white;
+            box-shadow: 0 0 20px var(--btc-glow);
+            transform: translateY(-1px);
+        }
+
+        /* ── TICKER TAPE ── */
+        .ticker-wrap {
+            overflow: hidden;
+            margin-bottom: 28px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--card);
+            padding: 10px 0;
+        }
+
+        .ticker-tape {
+            display: flex;
+            gap: 60px;
+            animation: tickerScroll 20s linear infinite;
+            white-space: nowrap;
+            padding: 0 20px;
+            font-size: 0.72em;
+            color: var(--muted);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .ticker-tape strong {
+            color: var(--btc);
+        }
+
+        @keyframes tickerScroll {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        /* ── STATS GRID ── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            padding: 22px 24px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            background: var(--card);
+            backdrop-filter: blur(20px);
+            position: relative;
+            overflow: hidden;
+            min-width: 0;
+            transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 16px;
+            opacity: 0;
+            transition: opacity 0.25s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+        }
+
+        body.dark .stat-card:hover {
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+            border-color: rgba(247, 147, 26, 0.2);
+        }
+
+        body.light .stat-card:hover {
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+            border-color: rgba(247, 147, 26, 0.3);
+        }
+
+        /* Price card – primary */
+        .stat-card.primary {
+            grid-row: span 1;
+            background: linear-gradient(135deg, var(--card) 0%, var(--bg2) 100%);
+            border-color: rgba(247, 147, 26, 0.2);
+        }
+
+        .stat-card.primary::after {
+            content: '₿';
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 5em;
+            font-weight: 900;
+            color: var(--btc);
+            opacity: 0.06;
+            font-family: 'Syne', sans-serif;
+        }
+
+        .stat-label {
+            font-size: 0.65em;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .label-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--btc);
+        }
+
+        .stat-value {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(1.1em, 2vw, 1.8em);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            line-height: 1;
+            transition: color 0.3s;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .stat-card.primary .stat-value {
+            font-size: clamp(1.4em, 2.5vw, 2.4em);
+            color: var(--text);
+        }
+
+        .price-change {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 10px;
+            font-size: 0.82em;
+            font-weight: 600;
+        }
+
+        .price-change.up {
+            color: var(--up);
+        }
+
+        .price-change.down {
+            color: var(--down);
+        }
+
+        .change-pill {
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.85em;
+        }
+
+        .change-pill.up {
+            background: var(--up-dim);
+            color: var(--up);
+        }
+
+        .change-pill.down {
+            background: var(--down-dim);
+            color: var(--down);
+        }
+
+        .price-up {
+            color: var(--up);
+        }
+
+        .price-down {
+            color: var(--down);
+        }
+
+        /* ── SECONDARY STATS ROW ── */
+        .secondary-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        /* ── CHART ── */
+        .chart-container {
+            border-radius: 18px;
+            overflow: hidden;
+            margin-bottom: 24px;
+            border: 1px solid var(--border);
+            background: var(--card);
+            backdrop-filter: blur(20px);
+            position: relative;
+        }
+
+        .chart-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 24px 0;
+        }
+
+        .chart-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.95em;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+        }
+
+        .chart-badge {
+            font-size: 0.65em;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: var(--btc-dim);
+            color: var(--btc);
+            border: 1px solid rgba(247, 147, 26, 0.2);
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        #tradingview-widget {
+            height: 520px;
+        }
+
+        /* ── SPARKLINE ── */
+        .sparkline-container {
+            padding: 20px 24px;
+            border-radius: 18px;
+            border: 1px solid var(--border);
+            background: var(--card);
+            backdrop-filter: blur(20px);
+            margin-bottom: 20px;
+        }
+
+        .spark-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .live-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.65em;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: var(--up-dim);
+            color: var(--up);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .live-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--up);
+            border-radius: 50%;
+            animation: statusPulse 1.5s infinite;
+        }
+
+        #sparkline {
+            height: 140px;
+        }
+
+        /* ── FOOTER ── */
+        footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 0.65em;
+            color: var(--muted);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        footer span {
+            color: var(--btc);
+        }
+
+        /* ── FLASH ── */
+        .flash-up {
+            animation: flashUp 0.5s;
+        }
+
+        .flash-down {
+            animation: flashDown 0.5s;
+        }
+
+        @keyframes flashUp {
+
+            0%,
+            100% {
+                background: var(--card);
+            }
+
+            50% {
+                background: var(--up-dim);
+            }
+        }
+
+        @keyframes flashDown {
+
+            0%,
+            100% {
+                background: var(--card);
+            }
+
+            50% {
+                background: var(--down-dim);
+            }
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 1100px) {
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .secondary-row {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 16px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .secondary-row {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            h1 {
+                font-size: 1.2em;
+            }
+
+            .stat-value {
+                font-size: 1.5em;
+            }
+
+            .stat-card.primary .stat-value {
+                font-size: 2em;
+            }
+
+            #tradingview-widget {
+                height: 380px;
+            }
+        }
+    </style>
+</head>
+
+<body class="dark">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <div class="container">
+        <!-- HEADER -->
+        <header>
+            <div class="brand">
+                <div class="btc-badge">₿</div>
+                <div>
+                    <h1>Bitcoin <span>Live</span></h1>
+                    <div class="header-sub">Real-time market dashboard · BTCUSDT Perpetual</div>
+                </div>
+            </div>
+            <div class="controls">
+                <div class="connection-status">
+                    <span class="status-dot disconnected" id="statusDot"></span>
+                    <span id="statusText">Connecting</span>
+                </div>
+                <button class="theme-toggle" id="themeToggle">
+                    <span id="themeIcon">🌙</span>
+                    <span id="themeText">Dark</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- TICKER TAPE -->
+        <div class="ticker-wrap">
+            <div class="ticker-tape" id="tickerTape">
+                <span>BTC/USDT Perpetual</span>
+                <span>·</span>
+                <span>Bybit Linear</span>
+                <span>·</span>
+                <span>Last Price: <strong id="tickerPrice">--</strong></span>
+                <span>·</span>
+                <span>24h Change: <strong id="tickerChange">--</strong></span>
+                <span>·</span>
+                <span>24h High: <strong id="tickerHigh">--</strong></span>
+                <span>·</span>
+                <span>24h Low: <strong id="tickerLow">--</strong></span>
+                <span>·</span>
+                <span>Volume: <strong id="tickerVol">--</strong></span>
+                <span>·</span>
+                <!-- Duplicate for seamless loop -->
+                <span>BTC/USDT Perpetual</span>
+                <span>·</span>
+                <span>Bybit Linear</span>
+                <span>·</span>
+                <span>Last Price: <strong id="tickerPrice2">--</strong></span>
+                <span>·</span>
+                <span>24h Change: <strong id="tickerChange2">--</strong></span>
+                <span>·</span>
+                <span>24h High: <strong id="tickerHigh2">--</strong></span>
+                <span>·</span>
+                <span>24h Low: <strong id="tickerLow2">--</strong></span>
+                <span>·</span>
+                <span>Volume: <strong id="tickerVol2">--</strong></span>
+                <span>·</span>
+            </div>
+        </div>
+
+        <!-- MAIN STATS -->
+        <div class="stats-grid">
+            <div class="stat-card primary" id="cardPrice">
+                <div class="stat-label"><span class="label-dot"></span>BTC Price · USDT</div>
+                <div class="stat-value" id="lastPrice">--</div>
+                <div class="price-change" id="priceChange">
+                    <span id="priceChangeArrow">--</span>
+                    <span class="change-pill" id="priceChangePill"></span>
+                </div>
+            </div>
+
+            <div class="stat-card" id="cardMark">
+                <div class="stat-label"><span class="label-dot" style="background:#818cf8"></span>Mark Price</div>
+                <div class="stat-value" id="markPrice">--</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-label"><span class="label-dot" style="background:var(--up)"></span>24h High</div>
+                <div class="stat-value price-up" id="high24h">--</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-label"><span class="label-dot" style="background:var(--down)"></span>24h Low</div>
+                <div class="stat-value price-down" id="low24h">--</div>
+            </div>
+        </div>
+
+        <!-- SECONDARY ROW -->
+        <div class="secondary-row">
+            <div class="stat-card">
+                <div class="stat-label"><span class="label-dot" style="background:#38bdf8"></span>24h Volume (USDT)
+                </div>
+                <div class="stat-value" id="volume24h" ">--</div>
+            </div>
+
+            <div class=" stat-card">
+                    <div class="stat-label"><span class="label-dot" style="background:var(--btc)"></span>24h Change %
+                    </div>
+                    <div class="stat-value" id="change24h">--</div>
+                </div>
+
+                <div class="stat-card" id="cardSpread">
+                    <div class="stat-label"><span class="label-dot" style="background:#a78bfa"></span>H/L Spread</div>
+                    <div class="stat-value" id="spreadVal">--</div>
+                </div>
+
+                <div class="stat-card" id="cardMidpoint">
+                    <div class="stat-label"><span class="label-dot" style="background:#fb923c"></span>Mid Price</div>
+                    <div class="stat-value" id="midpointVal">--</div>
+                </div>
+            </div>
+
+            <!-- TRADINGVIEW CHART -->
+            <div class="chart-container">
+                <div class="chart-header">
+                    <div class="chart-title">BTCUSDT · 5m Candlestick Chart</div>
+                    <div class="chart-badge">Bybit Perpetual</div>
+                </div>
+                <div id="tradingview-widget"></div>
+            </div>
+
+            <!-- SPARKLINE -->
+            <div class="sparkline-container">
+                <div class="spark-header">
+                    <div class="stat-label" style="margin:0"><span class="label-dot"></span>Last 60s Price Movement
+                    </div>
+                    <div class="live-badge"><span class="live-dot"></span>Live Feed</div>
+                </div>
+                <div id="sparkline"></div>
+            </div>
+
+            <footer>
+                Data via <span>Bybit WebSocket API</span> · Auto-reconnect enabled · <span id="footerTime">--</span>
+            </footer>
+        </div>
+
+        <script>
+            // ── Theme ──────────────────────────────────────────────
+            const themeToggle = document.getElementById('themeToggle');
+            const themeIcon = document.getElementById('themeIcon');
+            const themeText = document.getElementById('themeText');
+            const body = document.body;
+            let currentTheme = 'dark';
+
+            themeToggle.addEventListener('click', () => {
+                currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                body.className = currentTheme;
+                themeIcon.textContent = currentTheme === 'dark' ? '🌙' : '☀️';
+                themeText.textContent = currentTheme === 'dark' ? 'Dark' : 'Light';
+                loadTradingViewWidget();
+                updateSparklineTheme();
+            });
+
+            // ── State ──────────────────────────────────────────────
+            let ws = null;
+            let reconnectAttempts = 0;
+            const maxReconnectAttempts = 5;
+            let lastPrice = null, prevPrice = null;
+            let lastMarkPrice = 0, lastHigh = 0, lastLow = 0, lastVolume = 0, lastChange = 0;
+            const priceHistory = [];
+            const maxHistoryLength = 60;
+
+            // ── Footer clock ───────────────────────────────────────
+            function updateClock() {
+                document.getElementById('footerTime').textContent = new Date().toLocaleTimeString();
+            }
+            setInterval(updateClock, 1000);
+            updateClock();
+
+            // ── WebSocket ──────────────────────────────────────────
+            function connectWebSocket() {
+                try {
+                    ws = new WebSocket('wss://stream.bybit.com/v5/public/linear');
+
+                    ws.onopen = () => {
+                        reconnectAttempts = 0;
+                        updateConnectionStatus(true);
+                        ws.send(JSON.stringify({ op: 'subscribe', args: ['tickers.BTCUSDT'] }));
+                    };
+
+                    ws.onmessage = (event) => {
+                        const data = JSON.parse(event.data);
+                        if (data.topic === 'tickers.BTCUSDT' && data.data) {
+                            updateDashboard(data.data);
+                        }
+                    };
+
+                    ws.onerror = () => updateConnectionStatus(false);
+
+                    ws.onclose = () => {
+                        updateConnectionStatus(false);
+                        if (reconnectAttempts < maxReconnectAttempts) {
+                            reconnectAttempts++;
+                            setTimeout(connectWebSocket, 3000);
+                        }
+                    };
+                } catch (e) {
+                    updateConnectionStatus(false);
+                }
+            }
+
+            function updateConnectionStatus(connected) {
+                const dot = document.getElementById('statusDot');
+                const text = document.getElementById('statusText');
+                dot.className = `status-dot ${connected ? 'connected' : 'disconnected'}`;
+                text.textContent = connected ? 'Connected' : 'Disconnected';
+            }
+
+            // ── Dashboard update ───────────────────────────────────
+            function updateDashboard(data) {
+                prevPrice = lastPrice;
+
+                if (data.lastPrice) lastPrice = parseFloat(data.lastPrice);
+                if (data.markPrice) lastMarkPrice = parseFloat(data.markPrice);
+                if (data.highPrice24h) lastHigh = parseFloat(data.highPrice24h);
+                if (data.lowPrice24h) lastLow = parseFloat(data.lowPrice24h);
+                if (data.turnover24h) lastVolume = parseFloat(data.turnover24h);
+                if (data.price24hPcnt) lastChange = parseFloat(data.price24hPcnt);
+
+                const fmt = (v) => v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                const changePercent = lastChange * 100;
+                const isUp = changePercent >= 0;
+
+                // Flash main card
+                if (prevPrice !== null && lastPrice !== prevPrice) {
+                    const card = document.getElementById('cardPrice');
+                    card.classList.remove('flash-up', 'flash-down');
+                    void card.offsetWidth;
+                    card.classList.add(lastPrice > prevPrice ? 'flash-up' : 'flash-down');
+                }
+
+                // Price
+                document.getElementById('lastPrice').textContent = `$${fmt(lastPrice)}`;
+
+                // Change pill
+                const arrow = isUp ? '▲' : '▼';
+                document.getElementById('priceChangeArrow').textContent = `${arrow} vs 24h open`;
+                const pill = document.getElementById('priceChangePill');
+                pill.textContent = `${isUp ? '+' : ''}${changePercent.toFixed(2)}%`;
+                pill.className = `change-pill ${isUp ? 'up' : 'down'}`;
+                document.getElementById('priceChange').className = `price-change ${isUp ? 'up' : 'down'}`;
+
+                // Mark
+                document.getElementById('markPrice').textContent = `$${fmt(lastMarkPrice)}`;
+
+                // High / Low
+                document.getElementById('high24h').textContent = `$${fmt(lastHigh)}`;
+                document.getElementById('low24h').textContent = `$${fmt(lastLow)}`;
+
+                // Volume
+                document.getElementById('volume24h').textContent =
+                    lastVolume >= 1e9
+                        ? `$${(lastVolume / 1e9).toFixed(2)}B`
+                        : `$${(lastVolume / 1e6).toFixed(2)}M`;
+
+                // Change %
+                const chEl = document.getElementById('change24h');
+                chEl.textContent = `${isUp ? '+' : ''}${changePercent.toFixed(2)}%`;
+                chEl.className = `stat-value ${isUp ? 'price-up' : 'price-down'}`;
+
+                // Spread & Midpoint
+                const spread = lastHigh - lastLow;
+                const mid = (lastHigh + lastLow) / 2;
+                document.getElementById('spreadVal').textContent = `$${fmt(spread)}`;
+                document.getElementById('midpointVal').textContent = `$${fmt(mid)}`;
+
+                // Ticker tape
+                const tickerPriceStr = `$${fmt(lastPrice)}`;
+                const tickerChangeStr = `${isUp ? '+' : ''}${changePercent.toFixed(2)}%`;
+                const tickerHighStr = `$${fmt(lastHigh)}`;
+                const tickerLowStr = `$${fmt(lastLow)}`;
+                const tickerVolStr = lastVolume >= 1e9 ? `$${(lastVolume / 1e9).toFixed(2)}B` : `$${(lastVolume / 1e6).toFixed(2)}M`;
+
+                ['', '2'].forEach(suffix => {
+                    document.getElementById(`tickerPrice${suffix}`).textContent = tickerPriceStr;
+                    document.getElementById(`tickerChange${suffix}`).textContent = tickerChangeStr;
+                    document.getElementById(`tickerHigh${suffix}`).textContent = tickerHighStr;
+                    document.getElementById(`tickerLow${suffix}`).textContent = tickerLowStr;
+                    document.getElementById(`tickerVol${suffix}`).textContent = tickerVolStr;
+                });
+
+                updateSparkline(lastPrice);
+            }
+
+            // ── Sparkline ──────────────────────────────────────────
+            let sparklineChart = null;
+            let sparklineSeries = null;
+
+            function initSparkline() {
+                const el = document.getElementById('sparkline');
+                sparklineChart = LightweightCharts.createChart(el, {
+                    width: el.clientWidth,
+                    height: 140,
+                    layout: {
+                        background: { color: 'transparent' },
+                        textColor: currentTheme === 'dark' ? '#e8eaf0' : '#0d1220',
+                    },
+                    grid: {
+                        vertLines: { color: 'rgba(197, 203, 206, 0.06)' },
+                        horzLines: { color: 'rgba(197, 203, 206, 0.06)' },
+                    },
+                    rightPriceScale: { borderVisible: false },
+                    timeScale: { borderVisible: false, timeVisible: true, secondsVisible: true },
+                    crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+                });
+
+                sparklineSeries = sparklineChart.addAreaSeries({
+                    lineColor: '#f7931a',
+                    topColor: 'rgba(247, 147, 26, 0.25)',
+                    bottomColor: 'rgba(247, 147, 26, 0.01)',
+                    lineWidth: 2,
+                    priceLineVisible: false,
+                });
+
+                sparklineSeries.setData([]);
+
+                window.addEventListener('resize', () => {
+                    sparklineChart.applyOptions({ width: el.clientWidth });
+                });
+            }
+
+            function updateSparkline(price) {
+                if (!sparklineSeries || !price) return;
+                const ts = Math.floor(Date.now() / 1000);
+                const dp = { time: ts, value: Number(price) };
+                priceHistory.push(dp);
+                if (priceHistory.length > maxHistoryLength) priceHistory.shift();
+                sparklineSeries.update(dp);
+            }
+
+            function updateSparklineTheme() {
+                if (sparklineChart) {
+                    sparklineChart.applyOptions({
+                        layout: {
+                            background: { color: 'transparent' },
+                            textColor: currentTheme === 'dark' ? '#e8eaf0' : '#0d1220',
+                        },
+                    });
+                }
+            }
+
+            // ── TradingView Widget ─────────────────────────────────
+            function loadTradingViewWidget() {
+                const container = document.getElementById('tradingview-widget');
+                container.innerHTML = '';
+
+                const script = document.createElement('script');
+                script.type = 'text/javascript';
+                script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+                script.async = true;
+                script.innerHTML = JSON.stringify({
+                    autosize: true,
+                    symbol: 'BYBIT:BTCUSDT',
+                    interval: '5',
+                    timezone: 'Etc/UTC',
+                    theme: currentTheme,
+                    style: '1',
+                    locale: 'en',
+                    enable_publishing: false,
+                    hide_top_toolbar: false,
+                    hide_legend: false,
+                    save_image: false,
+                    container_id: 'tradingview-widget',
+                    backgroundColor: currentTheme === 'dark' ? 'rgba(13, 18, 32, 1)' : 'rgba(255, 255, 255, 1)',
+                    gridColor: currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.04)',
+                    support_host: 'https://www.tradingview.com'
+                });
+
+                container.appendChild(script);
+            }
+
+            // ── Init ───────────────────────────────────────────────
+            window.addEventListener('load', () => {
+                connectWebSocket();
+                loadTradingViewWidget();
+                initSparkline();
+            });
+
+            window.addEventListener('beforeunload', () => { if (ws) ws.close(); });
+        </script>
+</body>
+
+</html>
