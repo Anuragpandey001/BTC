@@ -29,15 +29,6 @@
                         'up-dim': 'rgba(0,229,160,0.12)',
                         down: '#ff4d6d',
                         'down-dim': 'rgba(255,77,109,0.12)',
-                        dark: {
-                            bg: '#080b14',
-                            bg2: '#0d1220',
-                            bg3: '#111827',
-                            card: 'rgba(13,18,32,0.85)',
-                            border: 'rgba(255,255,255,0.06)',
-                            text: '#e8eaf0',
-                            muted: 'rgba(232,234,240,0.45)',
-                        },
                     },
                     keyframes: {
                         badgePulse: {
@@ -52,25 +43,12 @@
                             '0%': { transform: 'translateX(0)' },
                             '100%': { transform: 'translateX(-50%)' },
                         },
-                        flashUp: {
-                            '0%,100%': { background: 'rgba(13,18,32,0.85)' },
-                            '50%': { background: 'rgba(0,229,160,0.12)' },
-                        },
-                        flashDown: {
-                            '0%,100%': { background: 'rgba(13,18,32,0.85)' },
-                            '50%': { background: 'rgba(255,77,109,0.12)' },
-                        },
                     },
                     animation: {
                         badgePulse: 'badgePulse 3s ease-in-out infinite',
                         statusPulse: 'statusPulse 2s infinite',
                         livePulse: 'statusPulse 1.5s infinite',
                         tickerScroll: 'tickerScroll 20s linear infinite',
-                        flashUp: 'flashUp 0.5s',
-                        flashDown: 'flashDown 0.5s',
-                    },
-                    backgroundImage: {
-                        'noise': "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E\")",
                     },
                 },
             },
@@ -78,7 +56,46 @@
     </script>
 
     <style>
-        /* Noise overlay */
+        /* ── CSS Variables for theming ── */
+        :root {
+            --bg: #080b14;
+            --bg2: #0d1220;
+            --bg3: #111827;
+            --card-bg: rgba(13, 18, 32, 0.85);
+            --card-border: rgba(255, 255, 255, 0.06);
+            --text: #e8eaf0;
+            --muted: rgba(232, 234, 240, 0.45);
+            --header-bg: rgba(13, 18, 32, 0.85);
+            --status-bg: #111827;
+            --ticker-bg: rgba(13, 18, 32, 0.85);
+            --chart-bg: rgba(13, 18, 32, 0.85);
+            --sparkline-bg: rgba(13, 18, 32, 0.85);
+        }
+
+        html.light {
+            --bg: #f0f2f8;
+            --bg2: #e8eaf4;
+            --bg3: #dde0ed;
+            --card-bg: rgba(255, 255, 255, 0.92);
+            --card-border: rgba(0, 0, 0, 0.08);
+            --text: #0d1220;
+            --muted: rgba(13, 18, 32, 0.45);
+            --header-bg: rgba(255, 255, 255, 0.92);
+            --status-bg: #e8eaf4;
+            --ticker-bg: rgba(255, 255, 255, 0.92);
+            --chart-bg: rgba(255, 255, 255, 0.92);
+            --sparkline-bg: rgba(255, 255, 255, 0.92);
+        }
+
+        /* ── Base ── */
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        /* ── Noise overlay ── */
         body::before {
             content: '';
             position: fixed;
@@ -89,7 +106,7 @@
             opacity: 0.6;
         }
 
-        /* Blob 1 */
+        /* ── Blobs ── */
         .blob-1 {
             position: fixed;
             width: 600px;
@@ -97,23 +114,18 @@
             top: -200px;
             right: -100px;
             border-radius: 50%;
+            background: rgba(247, 147, 26, 0.4);
             filter: blur(120px);
             pointer-events: none;
             z-index: 0;
+            opacity: 0.15;
             transition: opacity 0.4s;
         }
 
-        .dark .blob-1 {
-            background: rgba(247, 147, 26, 0.4);
-            opacity: 0.15;
-        }
-
-        .light .blob-1 {
-            background: rgba(247, 147, 26, 0.4);
+        html.light .blob-1 {
             opacity: 0.08;
         }
 
-        /* Blob 2 */
         .blob-2 {
             position: fixed;
             width: 400px;
@@ -121,23 +133,48 @@
             bottom: 0;
             left: -150px;
             border-radius: 50%;
+            background: rgba(99, 102, 241, 0.3);
             filter: blur(120px);
             pointer-events: none;
             z-index: 0;
+            opacity: 0.10;
             transition: opacity 0.4s;
         }
 
-        .dark .blob-2 {
-            background: rgba(99, 102, 241, 0.3);
-            opacity: 0.10;
-        }
-
-        .light .blob-2 {
-            background: rgba(99, 102, 241, 0.3);
+        html.light .blob-2 {
             opacity: 0.06;
         }
 
-        /* Ticker tape: disable text wrapping and animate */
+        /* ── Cards ── */
+        .card {
+            background: var(--card-bg);
+            border-color: var(--card-border);
+            color: var(--text);
+            transition: background 0.3s, border-color 0.3s, color 0.3s;
+        }
+
+        /* ── Header ── */
+        .header-bar {
+            background: var(--header-bg);
+            border-color: var(--card-border);
+            transition: background 0.3s, border-color 0.3s;
+        }
+
+        /* ── Status pill ── */
+        .status-pill {
+            background: var(--status-bg);
+            border-color: var(--card-border);
+            color: var(--text);
+            transition: background 0.3s, color 0.3s;
+        }
+
+        /* ── Ticker ── */
+        .ticker-wrap {
+            background: var(--ticker-bg);
+            border-color: var(--card-border);
+            transition: background 0.3s;
+        }
+
         .ticker-tape {
             display: flex;
             gap: 60px;
@@ -145,20 +182,35 @@
             white-space: nowrap;
         }
 
-        /* Flash animations */
-        .flash-up {
-            animation: flashUp 0.5s;
+        .ticker-muted {
+            color: var(--muted);
         }
 
-        .flash-down {
-            animation: flashDown 0.5s;
+        /* ── Muted text ── */
+        .text-muted {
+            color: var(--muted) !important;
         }
 
+        /* ── Sparkline wrapper ── */
+        .sparkline-wrap {
+            background: var(--sparkline-bg);
+            border-color: var(--card-border);
+            transition: background 0.3s;
+        }
+
+        /* ── Chart container ── */
+        .chart-wrap {
+            background: var(--chart-bg);
+            border-color: var(--card-border);
+            transition: background 0.3s;
+        }
+
+        /* ── Flash animations ── */
         @keyframes flashUp {
 
             0%,
             100% {
-                background: rgba(13, 18, 32, 0.85);
+                background: var(--card-bg);
             }
 
             50% {
@@ -170,12 +222,20 @@
 
             0%,
             100% {
-                background: rgba(13, 18, 32, 0.85);
+                background: var(--card-bg);
             }
 
             50% {
                 background: rgba(255, 77, 109, 0.12);
             }
+        }
+
+        .flash-up {
+            animation: flashUp 0.5s;
+        }
+
+        .flash-down {
+            animation: flashDown 0.5s;
         }
 
         @keyframes tickerScroll {
@@ -226,24 +286,6 @@
             animation: statusPulse 1.5s infinite;
         }
 
-        /* Light theme overrides for cards */
-        .light .card-bg {
-            background: rgba(255, 255, 255, 0.9);
-            border-color: rgba(0, 0, 0, 0.08);
-            color: #0d1220;
-        }
-
-        .light body {
-            background: #f0f2f8;
-            color: #0d1220;
-        }
-
-        .dark body {
-            background: #080b14;
-            color: #e8eaf0;
-        }
-
-        /* price_up/down colours */
         .price-up {
             color: #00e5a0;
         }
@@ -252,14 +294,28 @@
             color: #ff4d6d;
         }
 
-        /* Chart height */
         #tradingview-widget {
             height: 520px;
+        }
+
+        /* ── Footer ── */
+        footer {
+            color: var(--muted);
+            transition: color 0.3s;
+        }
+
+        /* ── Light mode: darken secondary text inside cards ── */
+        html.light .stat-label {
+            color: rgba(13, 18, 32, 0.5) !important;
+        }
+
+        html.light .footer-text {
+            color: rgba(13, 18, 32, 0.45) !important;
         }
     </style>
 </head>
 
-<body class="dark bg-[#080b14] text-[#e8eaf0] font-sans transition-colors duration-300">
+<body>
     <div class="blob-1"></div>
     <div class="blob-2"></div>
 
@@ -267,9 +323,8 @@
 
         <!-- ── HEADER ── -->
         <header
-            class="flex justify-between items-center mb-9 px-7 py-[18px] rounded-[18px] border border-white/[0.06] bg-[rgba(13,18,32,0.85)] backdrop-blur-xl">
+            class="header-bar card flex justify-between items-center mb-9 px-7 py-[18px] rounded-[18px] border backdrop-blur-xl">
             <div class="flex items-center gap-4">
-                <!-- Badge -->
                 <div
                     class="btc-badge w-12 h-12 rounded-[14px] bg-gradient-to-br from-[#f7931a] to-[#ffb347] flex items-center justify-center text-2xl font-black text-white">
                     ₿
@@ -278,7 +333,7 @@
                     <h1 class="text-[1.35em] font-bold tracking-tight leading-none">
                         Bitcoin <span class="text-[#f7931a]">Live</span>
                     </h1>
-                    <div class="mt-1 text-[0.68em] font-mono uppercase tracking-[0.04em] text-[rgba(232,234,240,0.45)]">
+                    <div class="stat-label mt-1 text-[0.68em] font-mono uppercase tracking-[0.04em]">
                         Real-time market dashboard · BTCUSDT Perpetual
                     </div>
                 </div>
@@ -287,7 +342,7 @@
             <div class="flex items-center gap-3">
                 <!-- Connection status -->
                 <div
-                    class="flex items-center gap-2 px-[13px] py-[7px] rounded-full border border-white/[0.06] bg-[#111827] text-[0.7em] font-mono font-medium uppercase tracking-[0.05em]">
+                    class="status-pill flex items-center gap-2 px-[13px] py-[7px] rounded-full border text-[0.7em] font-mono font-medium uppercase tracking-[0.05em]">
                     <span class="w-2 h-2 rounded-full bg-[#ff4d6d]" id="statusDot"></span>
                     <span id="statusText">Connecting</span>
                 </div>
@@ -301,15 +356,14 @@
         </header>
 
         <!-- ── TICKER TAPE ── -->
-        <div class="overflow-hidden mb-7 rounded-[10px] border border-white/[0.06] bg-[rgba(13,18,32,0.85)] py-[10px]">
-            <div class="ticker-tape px-5 text-[0.72em] uppercase tracking-[0.06em] text-[rgba(232,234,240,0.45)]">
+        <div class="ticker-wrap overflow-hidden mb-7 rounded-[10px] border py-[10px]">
+            <div class="ticker-tape ticker-muted px-5 text-[0.72em] uppercase tracking-[0.06em]">
                 <span>BTC/USDT Perpetual</span><span>·</span><span>Bybit Linear</span><span>·</span>
                 <span>Last Price: <strong class="text-[#f7931a]" id="tickerPrice">--</strong></span><span>·</span>
                 <span>24h Change: <strong class="text-[#f7931a]" id="tickerChange">--</strong></span><span>·</span>
                 <span>24h High: <strong class="text-[#f7931a]" id="tickerHigh">--</strong></span><span>·</span>
                 <span>24h Low: <strong class="text-[#f7931a]" id="tickerLow">--</strong></span><span>·</span>
                 <span>Volume: <strong class="text-[#f7931a]" id="tickerVol">--</strong></span><span>·</span>
-                <!-- duplicate for seamless loop -->
                 <span>BTC/USDT Perpetual</span><span>·</span><span>Bybit Linear</span><span>·</span>
                 <span>Last Price: <strong class="text-[#f7931a]" id="tickerPrice2">--</strong></span><span>·</span>
                 <span>24h Change: <strong class="text-[#f7931a]" id="tickerChange2">--</strong></span><span>·</span>
@@ -322,15 +376,13 @@
         <!-- ── MAIN STATS ── -->
         <div class="grid grid-cols-[2fr_1fr_1fr_1fr] gap-4 mb-6 max-lg:grid-cols-2 max-sm:grid-cols-1">
 
-            <!-- Price card (primary) -->
+            <!-- Price card -->
             <div id="cardPrice"
-                class="relative overflow-hidden rounded-2xl border border-[rgba(247,147,26,0.2)] bg-gradient-to-br from-[rgba(13,18,32,0.85)] to-[#0d1220] backdrop-blur-xl px-6 py-[22px] transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,0,0,0.4)]">
-                <!-- watermark -->
+                class="card relative overflow-hidden rounded-2xl border border-[rgba(247,147,26,0.2)] backdrop-blur-xl px-6 py-[22px] transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,0,0,0.15)]">
                 <span
                     class="absolute right-5 top-1/2 -translate-y-1/2 text-[5em] font-black text-[#f7931a] opacity-[0.06] select-none pointer-events-none">₿</span>
-
                 <div
-                    class="flex items-center gap-1.5 text-[0.65em] font-semibold uppercase tracking-[0.12em] text-[rgba(232,234,240,0.45)] mb-2.5">
+                    class="stat-label flex items-center gap-1.5 text-[0.65em] font-semibold uppercase tracking-[0.12em] mb-2.5">
                     <span class="w-1.5 h-1.5 rounded-full bg-[#f7931a] inline-block"></span>BTC Price · USDT
                 </div>
                 <div class="text-[clamp(1.4em,2.5vw,2.4em)] font-extrabold tracking-tight leading-none" id="lastPrice">
@@ -343,9 +395,9 @@
 
             <!-- Mark Price -->
             <div
-                class="rounded-2xl border border-white/[0.06] bg-[rgba(13,18,32,0.85)] backdrop-blur-xl px-6 py-[22px] transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,0,0,0.4)] hover:border-[rgba(247,147,26,0.2)]">
+                class="card rounded-2xl border backdrop-blur-xl px-6 py-[22px] transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,0,0,0.15)] hover:border-[rgba(247,147,26,0.2)]">
                 <div
-                    class="flex items-center gap-1.5 text-[0.65em] font-semibold uppercase tracking-[0.12em] text-[rgba(232,234,240,0.45)] mb-2.5">
+                    class="stat-label flex items-center gap-1.5 text-[0.65em] font-semibold uppercase tracking-[0.12em] mb-2.5">
                     <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 inline-block"></span>Mark Price
                 </div>
                 <div class="text-[clamp(1.1em,2vw,1.8em)] font-extrabold tracking-tight leading-none" id="markPrice">--
@@ -354,9 +406,9 @@
 
             <!-- 24h High -->
             <div
-                class="rounded-2xl border border-white/[0.06] bg-[rgba(13,18,32,0.85)] backdrop-blur-xl px-6 py-[22px] transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,0,0,0.4)] hover:border-[rgba(247,147,26,0.2)]">
+                class="card rounded-2xl border backdrop-blur-xl px-6 py-[22px] transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,0,0,0.15)] hover:border-[rgba(247,147,26,0.2)]">
                 <div
-                    class="flex items-center gap-1.5 text-[0.65em] font-semibold uppercase tracking-[0.12em] text-[rgba(232,234,240,0.45)] mb-2.5">
+                    class="stat-label flex items-center gap-1.5 text-[0.65em] font-semibold uppercase tracking-[0.12em] mb-2.5">
                     <span class="w-1.5 h-1.5 rounded-full bg-[#00e5a0] inline-block"></span>24h High
                 </div>
                 <div class="text-[clamp(1.1em,2vw,1.8em)] font-extrabold tracking-tight leading-none price-up"
@@ -365,9 +417,9 @@
 
             <!-- 24h Low -->
             <div
-                class="rounded-2xl border border-white/[0.06] bg-[rgba(13,18,32,0.85)] backdrop-blur-xl px-6 py-[22px] transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,0,0,0.4)] hover:border-[rgba(247,147,26,0.2)]">
+                class="card rounded-2xl border backdrop-blur-xl px-6 py-[22px] transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,0,0,0.15)] hover:border-[rgba(247,147,26,0.2)]">
                 <div
-                    class="flex items-center gap-1.5 text-[0.65em] font-semibold uppercase tracking-[0.12em] text-[rgba(232,234,240,0.45)] mb-2.5">
+                    class="stat-label flex items-center gap-1.5 text-[0.65em] font-semibold uppercase tracking-[0.12em] mb-2.5">
                     <span class="w-1.5 h-1.5 rounded-full bg-[#ff4d6d] inline-block"></span>24h Low
                 </div>
                 <div class="text-[clamp(1.1em,2vw,1.8em)] font-extrabold tracking-tight leading-none price-down"
@@ -377,44 +429,40 @@
 
         <!-- ── SECONDARY ROW ── -->
         <div class="grid grid-cols-4 gap-4 mb-6 max-lg:grid-cols-2">
-            <!-- Volume -->
             <div
-                class="rounded-2xl border border-white/[0.06] bg-[rgba(13,18,32,0.85)] backdrop-blur-xl px-6 py-[22px] transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,0,0,0.4)] hover:border-[rgba(247,147,26,0.2)]">
+                class="card rounded-2xl border backdrop-blur-xl px-6 py-[22px] transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,0,0,0.15)] hover:border-[rgba(247,147,26,0.2)]">
                 <div
-                    class="flex items-center gap-1.5 text-[0.65em] font-semibold uppercase tracking-[0.12em] text-[rgba(232,234,240,0.45)] mb-2.5">
+                    class="stat-label flex items-center gap-1.5 text-[0.65em] font-semibold uppercase tracking-[0.12em] mb-2.5">
                     <span class="w-1.5 h-1.5 rounded-full bg-sky-400 inline-block"></span>24h Volume (USDT)
                 </div>
                 <div class="text-[clamp(1.1em,2vw,1.8em)] font-extrabold tracking-tight leading-none" id="volume24h">--
                 </div>
             </div>
 
-            <!-- Change % -->
             <div
-                class="rounded-2xl border border-white/[0.06] bg-[rgba(13,18,32,0.85)] backdrop-blur-xl px-6 py-[22px] transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,0,0,0.4)] hover:border-[rgba(247,147,26,0.2)]">
+                class="card rounded-2xl border backdrop-blur-xl px-6 py-[22px] transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,0,0,0.15)] hover:border-[rgba(247,147,26,0.2)]">
                 <div
-                    class="flex items-center gap-1.5 text-[0.65em] font-semibold uppercase tracking-[0.12em] text-[rgba(232,234,240,0.45)] mb-2.5">
+                    class="stat-label flex items-center gap-1.5 text-[0.65em] font-semibold uppercase tracking-[0.12em] mb-2.5">
                     <span class="w-1.5 h-1.5 rounded-full bg-[#f7931a] inline-block"></span>24h Change %
                 </div>
                 <div class="text-[clamp(1.1em,2vw,1.8em)] font-extrabold tracking-tight leading-none" id="change24h">--
                 </div>
             </div>
 
-            <!-- Spread -->
             <div
-                class="rounded-2xl border border-white/[0.06] bg-[rgba(13,18,32,0.85)] backdrop-blur-xl px-6 py-[22px] transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,0,0,0.4)] hover:border-[rgba(247,147,26,0.2)]">
+                class="card rounded-2xl border backdrop-blur-xl px-6 py-[22px] transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,0,0,0.15)] hover:border-[rgba(247,147,26,0.2)]">
                 <div
-                    class="flex items-center gap-1.5 text-[0.65em] font-semibold uppercase tracking-[0.12em] text-[rgba(232,234,240,0.45)] mb-2.5">
+                    class="stat-label flex items-center gap-1.5 text-[0.65em] font-semibold uppercase tracking-[0.12em] mb-2.5">
                     <span class="w-1.5 h-1.5 rounded-full bg-violet-400 inline-block"></span>H/L Spread
                 </div>
                 <div class="text-[clamp(1.1em,2vw,1.8em)] font-extrabold tracking-tight leading-none" id="spreadVal">--
                 </div>
             </div>
 
-            <!-- Midpoint -->
             <div
-                class="rounded-2xl border border-white/[0.06] bg-[rgba(13,18,32,0.85)] backdrop-blur-xl px-6 py-[22px] transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,0,0,0.4)] hover:border-[rgba(247,147,26,0.2)]">
+                class="card rounded-2xl border backdrop-blur-xl px-6 py-[22px] transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,0,0,0.15)] hover:border-[rgba(247,147,26,0.2)]">
                 <div
-                    class="flex items-center gap-1.5 text-[0.65em] font-semibold uppercase tracking-[0.12em] text-[rgba(232,234,240,0.45)] mb-2.5">
+                    class="stat-label flex items-center gap-1.5 text-[0.65em] font-semibold uppercase tracking-[0.12em] mb-2.5">
                     <span class="w-1.5 h-1.5 rounded-full bg-orange-400 inline-block"></span>Mid Price
                 </div>
                 <div class="text-[clamp(1.1em,2vw,1.8em)] font-extrabold tracking-tight leading-none" id="midpointVal">
@@ -423,8 +471,7 @@
         </div>
 
         <!-- ── TRADINGVIEW CHART ── -->
-        <div
-            class="rounded-[18px] overflow-hidden mb-6 border border-white/[0.06] bg-[rgba(13,18,32,0.85)] backdrop-blur-xl">
+        <div class="chart-wrap rounded-[18px] overflow-hidden mb-6 border backdrop-blur-xl">
             <div class="flex items-center justify-between px-6 pt-[18px]">
                 <div class="text-[0.95em] font-bold tracking-tight">BTCUSDT · 5m Candlestick Chart</div>
                 <div
@@ -436,10 +483,10 @@
         </div>
 
         <!-- ── SPARKLINE ── -->
-        <div class="rounded-[18px] border border-white/[0.06] bg-[rgba(13,18,32,0.85)] backdrop-blur-xl px-6 py-5 mb-5">
+        <div class="sparkline-wrap rounded-[18px] border backdrop-blur-xl px-6 py-5 mb-5">
             <div class="flex items-center justify-between mb-3">
                 <div
-                    class="flex items-center gap-1.5 text-[0.65em] font-semibold uppercase tracking-[0.12em] text-[rgba(232,234,240,0.45)]">
+                    class="stat-label flex items-center gap-1.5 text-[0.65em] font-semibold uppercase tracking-[0.12em]">
                     <span class="w-1.5 h-1.5 rounded-full bg-[#f7931a] inline-block"></span>Last 60s Price Movement
                 </div>
                 <div
@@ -451,11 +498,11 @@
         </div>
 
         <!-- ── FOOTER ── -->
-        <footer class="text-center py-5 text-[0.65em] uppercase tracking-[0.08em] text-[rgba(232,234,240,0.45)]">
+        <footer class="text-center py-5 text-[0.65em] uppercase tracking-[0.08em]">
             Data via <span class="text-[#f7931a]">Bybit WebSocket API</span> · Auto-reconnect enabled ·
             <span class="text-[#f7931a]" id="footerTime">--</span>
         </footer>
-    </div><!-- /container -->
+    </div>
 
     <script>
         // ── Theme ─────────────────────────────────────────────
@@ -465,29 +512,24 @@
         const htmlEl = document.documentElement;
         let currentTheme = 'dark';
 
-        themeToggle.addEventListener('click', () => {
-            currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            htmlEl.className = currentTheme;
-            document.body.className = currentTheme === 'dark'
-                ? 'dark bg-[#080b14] text-[#e8eaf0] font-sans transition-colors duration-300'
-                : 'light bg-[#f0f2f8] text-[#0d1220] font-sans transition-colors duration-300';
+        function applyTheme(theme) {
+            currentTheme = theme;
+            htmlEl.className = theme;                        // drives all CSS vars
 
-            // Swap card backgrounds for light mode
-            const cards = document.querySelectorAll('[data-card]');
-            cards.forEach(c => {
-                if (currentTheme === 'light') {
-                    c.style.background = 'rgba(255,255,255,0.9)';
-                    c.style.borderColor = 'rgba(0,0,0,0.08)';
-                } else {
-                    c.style.background = '';
-                    c.style.borderColor = '';
-                }
-            });
+            // Update toggle button appearance
+            const isDark = theme === 'dark';
+            themeToggle.style.background = isDark ? '#111827' : '#e8eaf4';
+            themeToggle.style.borderColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.1)';
+            themeToggle.style.color = isDark ? '#e8eaf0' : '#0d1220';
+            themeIcon.textContent = isDark ? '🌙' : '☀️';
+            themeText.textContent = isDark ? 'Dark' : 'Light';
 
-            themeIcon.textContent = currentTheme === 'dark' ? '🌙' : '☀️';
-            themeText.textContent = currentTheme === 'dark' ? 'Dark' : 'Light';
             loadTradingViewWidget();
             updateSparklineTheme();
+        }
+
+        themeToggle.addEventListener('click', () => {
+            applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
         });
 
         // ── State ──────────────────────────────────────────────
@@ -568,10 +610,8 @@
                 card.classList.add(lastPrice > prevPrice ? 'flash-up' : 'flash-down');
             }
 
-            // Price
             document.getElementById('lastPrice').textContent = `$${fmt(lastPrice)}`;
 
-            // Change pill
             const arrow = isUp ? '▲' : '▼';
             document.getElementById('priceChangeArrow').textContent = `${arrow} vs 24h open`;
             const pill = document.getElementById('priceChangePill');
@@ -582,26 +622,21 @@
             document.getElementById('priceChange').className =
                 `flex items-center gap-1.5 mt-2.5 text-[0.82em] font-semibold ${isUp ? 'text-[#00e5a0]' : 'text-[#ff4d6d]'}`;
 
-            // Mark, High, Low
             document.getElementById('markPrice').textContent = `$${fmt(lastMarkPrice)}`;
             document.getElementById('high24h').textContent = `$${fmt(lastHigh)}`;
             document.getElementById('low24h').textContent = `$${fmt(lastLow)}`;
 
-            // Volume
             document.getElementById('volume24h').textContent = lastVolume >= 1e9
                 ? `$${(lastVolume / 1e9).toFixed(2)}B`
                 : `$${(lastVolume / 1e6).toFixed(2)}M`;
 
-            // Change %
             const chEl = document.getElementById('change24h');
             chEl.textContent = `${isUp ? '+' : ''}${changePercent.toFixed(2)}%`;
             chEl.className = `text-[clamp(1.1em,2vw,1.8em)] font-extrabold tracking-tight leading-none ${isUp ? 'price-up' : 'price-down'}`;
 
-            // Spread & Midpoint
             document.getElementById('spreadVal').textContent = `$${fmt(lastHigh - lastLow)}`;
             document.getElementById('midpointVal').textContent = `$${fmt((lastHigh + lastLow) / 2)}`;
 
-            // Ticker tape
             const tickerPriceStr = `$${fmt(lastPrice)}`;
             const tickerChangeStr = `${isUp ? '+' : ''}${changePercent.toFixed(2)}%`;
             const tickerHighStr = `$${fmt(lastHigh)}`;
@@ -672,6 +707,10 @@
                         background: { color: 'transparent' },
                         textColor: currentTheme === 'dark' ? '#e8eaf0' : '#0d1220',
                     },
+                    grid: {
+                        vertLines: { color: currentTheme === 'dark' ? 'rgba(197,203,206,0.06)' : 'rgba(0,0,0,0.06)' },
+                        horzLines: { color: currentTheme === 'dark' ? 'rgba(197,203,206,0.06)' : 'rgba(0,0,0,0.06)' },
+                    },
                 });
             }
         }
@@ -706,6 +745,7 @@
 
         // ── Init ───────────────────────────────────────────────
         window.addEventListener('load', () => {
+            applyTheme('dark');
             connectWebSocket();
             loadTradingViewWidget();
             initSparkline();
